@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Capture Image</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        margin: 20px;
+      }
+      #capture {
+        width: 100%;
+        max-width: 600px;
+        margin: 0 auto;
+        text-align: center;
+      }
+      video {
+        width: 100%;
+        height: auto;
+      }
+      canvas {
+        display: none;
+      }
+      button {
+        margin-top: 10px;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Capture Image from Camera</h1>
+
+    <div id="capture">
+      <video id="video" autoplay></video>
+      <canvas id="canvas"></canvas>
+      <button id="captureButton">Capture</button>
+      <img
+        id="capturedImage"
+        src=""
+        alt="Captured Image"
+        style="display: none; margin-top: 20px"
+      />
+    </div>
+
+    <script>
+      // Access webcam
+      const video = document.getElementById("video");
+      const canvas = document.getElementById("canvas");
+      const captureButton = document.getElementById("captureButton");
+      const capturedImage = document.getElementById("capturedImage");
+
+      // Set up the video stream
+      navigator.mediaDevices
+        .getUserMedia({ video: true })
+        .then((stream) => {
+          video.srcObject = stream;
+        })
+        .catch((err) => {
+          alert("Error accessing camera: " + err);
+        });
+
+      // Capture the image when the button is clicked
+      captureButton.addEventListener("click", () => {
+        const context = canvas.getContext("2d");
+        // Set the canvas size to match the video
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        // Draw the current frame from the video onto the canvas
+        context.drawImage(video, 0, 0, canvas.width, canvas.height);
+        // Convert the canvas content to an image
+        const imageUrl = canvas.toDataURL("image/png");
+        capturedImage.src = imageUrl;
+        capturedImage.style.display = "block";
+        uploadCapturedImage(imageUrl);
+      });
+
+      // Function to upload the captured image
+      async function uploadCapturedImage(imageData) {
+        const formData = new FormData();
+        const blob = dataURItoBlob(imageData);
+        formData.append("file", blob, "captured.png"); // Use the captured.png filename for now
+
+        const response = await fetch("/upload", {
+          method: "POST",
+          body: formData,
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          alert("Image uploaded successfully!");
+          // Optionally, show the uploaded image and QR code on the page
+          window.location.href = "/";
+        } else {
+          alert("Image upload failed!");
+        }
+      }
+
+      // Function to convert data URI to a Blob
+      function dataURItoBlob(dataURI) {
+        const byteString = atob(dataURI.split(",")[1]);
+        const arrayBuffer = new ArrayBuffer(byteString.length);
+        const uintArray = new Uint8Array(arrayBuffer);
+
+        for (let i = 0; i < byteString.length; i++) {
+          uintArray[i] = byteString.charCodeAt(i);
+        }
+
+        return new Blob([uintArray], { type: "image/png" });
+      }
+    </script>
+  </body>
+</html>

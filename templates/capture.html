@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Image Upload with QR Code</title>
+    <style>
+      /* General styling for the body */
+      body {
+        font-family: Arial, sans-serif;
+        margin: 0;
+        padding: 0;
+        background-color: #000; /* black background to complement full-screen video */
+      }
+
+      /* Full-screen video setup */
+      #cameraSection {
+        position: relative;
+        width: 100%;
+        height: 100vh; /* Full screen height */
+      }
+
+      video {
+        width: 100%;
+        height: 100%; /* Full height */
+        object-fit: cover; /* Ensures the video covers the screen without distortion */
+        border: none;
+      }
+
+      /* Styling for the capture button */
+      #captureButton {
+        position: absolute;
+        top: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        padding: 15px 30px;
+        font-size: 18px;
+        background-color: #4caf50;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        width: 80%;
+        max-width: 300px;
+      }
+
+      #captureButton:hover {
+        background-color: #45a049;
+      }
+
+      /* Pop-up Styling */
+      .popup {
+        display: none;
+        position: absolute;
+        top: 50px; /* Adjust pop-up position to be above the video */
+        left: 50%;
+        transform: translateX(-50%);
+        padding: 20px;
+        background-color: rgba(0, 0, 0, 0.8);
+        color: white;
+        border-radius: 5px;
+        text-align: center;
+        z-index: 9999;
+        max-width: 90%;
+        width: 100%;
+      }
+
+      .popup h2 {
+        font-size: 20px;
+        margin-bottom: 10px;
+      }
+
+      .popup p {
+        font-size: 16px;
+        margin-bottom: 20px;
+      }
+
+      .popup button {
+        padding: 10px 20px;
+        background-color: #4caf50;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        font-size: 16px;
+      }
+
+      .popup button:hover {
+        background-color: #45a049;
+      }
+
+      /* Media query for smaller screens */
+      @media (max-width: 600px) {
+        #captureButton {
+          width: 100%;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1 style="display: none">Capture Image and Upload</h1>
+      <!-- Hidden header for better mobile view -->
+
+      <!-- Camera Capture Section -->
+      <div id="cameraSection">
+        <video id="videoElement" autoplay></video>
+        <canvas id="canvas" style="display: none"></canvas>
+        <button id="captureButton">Capture Image</button>
+      </div>
+
+      <!-- Pop-up for Confirmation -->
+      <div id="popup" class="popup">
+        <h2>Image Captured Successfully!</h2>
+        <p>Your image has been uploaded along with the QR code.</p>
+        <button id="closePopup">Close</button>
+      </div>
+    </div>
+
+    <script>
+      // Start the camera feed
+      async function startCamera() {
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: true,
+        });
+        document.getElementById("videoElement").srcObject = stream;
+      }
+
+      // Capture the image from the camera feed
+      document.getElementById("captureButton").addEventListener("click", () => {
+        const canvas = document.getElementById("canvas");
+        const videoElement = document.getElementById("videoElement");
+
+        canvas.width = videoElement.videoWidth;
+        canvas.height = videoElement.videoHeight;
+        const ctx = canvas.getContext("2d");
+        ctx.drawImage(videoElement, 0, 0, canvas.width, canvas.height);
+
+        const imageData = canvas.toDataURL("image/png");
+        uploadCapturedImage(imageData);
+      });
+
+      // Upload the captured image
+      async function uploadCapturedImage(imageData) {
+        const formData = new FormData();
+        const blob = dataURItoBlob(imageData);
+        formData.append("file", blob, "captured_" + Date.now() + ".png");
+
+        const response = await fetch("/upload", {
+          method: "POST",
+          body: formData,
+        });
+
+        if (response.ok) {
+          // Show pop-up on successful upload
+          showPopup();
+        } else {
+          alert("Image upload failed!");
+        }
+      }
+
+      // Convert Data URI to Blob
+      function dataURItoBlob(dataURI) {
+        const byteString = atob(dataURI.split(",")[1]);
+        const ab = new ArrayBuffer(byteString.length);
+        const ua = new Uint8Array(ab);
+        for (let i = 0; i < byteString.length; i++) {
+          ua[i] = byteString.charCodeAt(i);
+        }
+        return new Blob([ab], { type: "image/png" });
+      }
+
+      // Show pop-up
+      function showPopup() {
+        const popup = document.getElementById("popup");
+        popup.style.display = "block";
+      }
+
+      // Close the pop-up
+      document.getElementById("closePopup").addEventListener("click", () => {
+        const popup = document.getElementById("popup");
+        popup.style.display = "none";
+      });
+
+      // Start camera feed when the page loads
+      window.onload = startCamera;
+    </script>
+  </body>
+</html>

@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Image Upload with QR Code</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        margin: 20px;
+      }
+      .upload-form {
+        margin-bottom: 20px;
+      }
+      .gallery {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 20px;
+      }
+      .card {
+        border: 1px solid #ccc;
+        padding: 10px;
+        text-align: center;
+      }
+      .card img {
+        max-width: 200px;
+        height: auto;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Image Upload with Embedded QR Code</h1>
+
+    <!-- Link to navigate to the Capture page -->
+    <a href="/capture">Go to Capture Page</a>
+
+    <!-- Image Upload Form -->
+    <form class="upload-form" id="uploadForm">
+      <input type="file" id="fileInput" name="file" accept="image/*" required />
+      <button type="submit">Upload</button>
+    </form>
+
+    <!-- Display uploaded images and QR codes -->
+    <div class="gallery" id="gallery">
+      {% for image_file in image_files %}
+      <div class="card">
+        <img
+          src="{{ url_for('serve_uploaded_file', filename=image_file) }}"
+          alt="Uploaded Image"
+        />
+        <img
+          src="{{ url_for('serve_qr_code', filename=image_file.split('.')[0] + '_qr.png') }}"
+          alt="QR Code"
+        />
+      </div>
+      {% endfor %}
+    </div>
+
+    <script>
+      const uploadForm = document.getElementById("uploadForm");
+      const gallery = document.getElementById("gallery");
+
+      uploadForm.addEventListener("submit", async (e) => {
+        e.preventDefault();
+
+        const formData = new FormData();
+        const fileInput = document.getElementById("fileInput");
+        formData.append("file", fileInput.files[0]);
+
+        const response = await fetch("/upload", {
+          method: "POST",
+          body: formData,
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          const card = document.createElement("div");
+          card.className = "card";
+          card.innerHTML = `
+        <img src="${data.image_url}" alt="Uploaded Image">
+        <img src="${data.qr_code_url}" alt="QR Code">
+      `;
+          gallery.appendChild(card);
+        } else {
+          alert("Image upload failed!");
+        }
+      });
+    </script>
+  </body>
+</html>
