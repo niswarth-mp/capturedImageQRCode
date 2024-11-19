@@ -27,7 +27,8 @@
         font-family: "Dancing Script", cursive;
       }
 
-      a {
+      a,
+      button {
         display: inline-block;
         text-decoration: none;
         color: #fff;
@@ -39,9 +40,12 @@
         font-family: "Dancing Script", cursive;
         text-align: center;
         transition: background-color 0.3s ease;
+        border: none;
+        cursor: pointer;
       }
 
-      a:hover {
+      a:hover,
+      button:hover {
         background-color: #8c4b55;
       }
 
@@ -141,11 +145,13 @@
     </style>
   </head>
   <body>
-    <h1>Wedding Memories Upload</h1>
+    <h1>♥ Wedding Memories Upload ♥</h1>
 
-    <!-- Link to navigate to the Capture page -->
-    <div style="text-align: center; margin-bottom: 20px;">
+    <!-- Links and Button for Navigation -->
+    <div style="text-align: center; margin-bottom: 20px">
       <a href="/capture">Capture More Memories</a>
+      <!-- New Button -->
+      <button onclick="navigateToGallery()">View Full Gallery</button>
     </div>
 
     <!-- Image Upload Form -->
@@ -170,11 +176,14 @@
       {% endfor %}
     </div>
 
-    <footer>
-      Made with ♥ to cherish your wedding memories.
-    </footer>
+    <footer>Made with ♥ to cherish your wedding memories.</footer>
 
     <script>
+      // Navigate to Gallery Page
+      function navigateToGallery() {
+        window.location.href = "/gallery"; // Ensure '/gallery' is defined in Flask
+      }
+
       const uploadForm = document.getElementById("uploadForm");
       const gallery = document.getElementById("gallery");
 
