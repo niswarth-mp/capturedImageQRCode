@@ -3,7 +3,10 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Manage Wedding Memories</title>
+    <title>Wedding Memories</title>
+    <div class="title">
+      <span>Vilas & Nisarga</span>
+    </div>
     <style>
       /* General Reset */
       * {
@@ -60,7 +63,61 @@
         border-radius: 10px;
         margin-bottom: 15px;
       }
+     /* Title Styling */
+      .title {
+        font-family: "Dancing Script", cursive;
+        font-size: 4rem;
+        color: #b76e79;
+        text-align: center;
+        position: relative;
+        text-shadow: 3px 3px 10px rgba(0, 0, 0, 0.1);
+        animation: fadeInTitle 3s ease-in-out;
+        margin-bottom: 20px;
+      }
 
+      .title::before {
+        content: "💍";
+        position: absolute;
+        left: -50px;
+        top: -10px;
+        font-size: 4rem;
+        animation: spin 3s linear infinite;
+      }
+
+      .title span {
+        color: #b76e79;
+        font-size: 3.5rem;
+      }
+
+      /* Animation for fade-in */
+      @keyframes fadeIn {
+        0% {
+          opacity: 0;
+        }
+        100% {
+          opacity: 1;
+        }
+      }
+
+      @keyframes fadeInTitle {
+        0% {
+          opacity: 0;
+          transform: translateY(-50px);
+        }
+        100% {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      @keyframes spin {
+        0% {
+          transform: rotate(0deg);
+        }
+        100% {
+          transform: rotate(360deg);
+        }
+      }
       .image-number {
         font-size: 1.2rem;
         font-weight: bold;
