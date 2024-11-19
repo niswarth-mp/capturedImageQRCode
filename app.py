@@ -1,10 +1,13 @@
 import os
 import random
 import string
+import socket
 from flask import Flask, request, jsonify, send_from_directory, render_template
+
 import qrcode
 
 app = Flask(__name__)
+
 UPLOAD_FOLDER = "uploads"
 QR_FOLDER = "qr_codes"
 
@@ -15,6 +18,12 @@ os.makedirs(QR_FOLDER, exist_ok=True)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 app.config['QR_FOLDER'] = QR_FOLDER
 
+# Function to get the local IP address
+def get_local_ip():
+    hostname = socket.gethostname()
+    local_ip = socket.gethostbyname(hostname)
+    return local_ip
+
 # Generate a random string to use as the file name
 def generate_random_filename(extension):
     random_string = ''.join(random.choices(string.ascii_letters + string.digits, k=10))
@@ -22,15 +31,20 @@ def generate_random_filename(extension):
 
 @app.route('/')
 def index():
-    # Get list of uploaded images and QR codes
+    # Get list of uploaded images
     image_files = os.listdir(app.config['UPLOAD_FOLDER'])
-    qr_files = os.listdir(app.config['QR_FOLDER'])
-    return render_template("index.html", image_files=image_files, qr_files=qr_files)
+    return render_template("index.html", image_files=image_files)
 
 @app.route('/capture')
 def capture():
     # Render a page with camera functionality
     return render_template('capture.html')
+
+@app.route('/gallery')
+def gallery():
+    # Get list of uploaded images
+    image_files = os.listdir(app.config['UPLOAD_FOLDER'])
+    return render_template("gallery.html", image_files=image_files)
 
 @app.route('/upload', methods=['POST'])
 def upload_file():
@@ -42,17 +56,23 @@ def upload_file():
         return jsonify({'error': 'No selected file'}), 400
 
     if file:
-        # Generate a random file name
-        extension = file.filename.rsplit('.', 1)[1].lower()  # Get the file extension (e.g., 'png')
+        # Extract and validate the file extension
+        if '.' in file.filename:
+            extension = file.filename.rsplit('.', 1)[1].lower()
+        else:
+            return jsonify({'error': 'Invalid file extension'}), 400
+
         random_filename = generate_random_filename(extension)
-        
+
         # Save the uploaded image with the random filename
         filepath = os.path.join(app.config['UPLOAD_FOLDER'], random_filename)
         file.save(filepath)
 
-        # Use the hosted domain URL
-        hosted_domain = "https://capturedimageqrcode-2.onrender.com"
-        image_url = f"{hosted_domain}/uploads/{random_filename}"
+        # Get the local IP address of the server
+        local_ip = get_local_ip()
+        image_url = f"http://{local_ip}:5000/uploads/{random_filename}"
+        
+        # Generate a QR code for the image URL
         qr_code_path = generate_qr_code(image_url, random_filename)
 
         return jsonify({
@@ -79,6 +99,23 @@ def serve_uploaded_file(filename):
 @app.route('/qr_codes/<filename>')
 def serve_qr_code(filename):
     return send_from_directory(app.config['QR_FOLDER'], filename)
+
+@app.route('/delete/<filename>', methods=['DELETE'])
+def delete_file(filename):
+    # Delete uploaded image
+    uploaded_file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+    qr_file_path = os.path.join(app.config['QR_FOLDER'], f"{os.path.splitext(filename)[0]}_qr.png")
+
+    if os.path.exists(uploaded_file_path):
+        os.remove(uploaded_file_path)
+    else:
+        return jsonify({'error': 'Image file not found'}), 404
+
+    # Delete corresponding QR code file
+    if os.path.exists(qr_file_path):
+        os.remove(qr_file_path)
+
+    return jsonify({'success': True}), 200
 
 # if __name__ == '__main__':
 #     # Run the server on the local IP address
