@@ -1,7 +1,6 @@
 import os
 import random
 import string
-import socket
 from flask import Flask, request, jsonify, send_from_directory, render_template
 import qrcode
 
@@ -15,12 +14,6 @@ os.makedirs(QR_FOLDER, exist_ok=True)
 
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 app.config['QR_FOLDER'] = QR_FOLDER
-
-# Function to get the local IP address
-def get_local_ip():
-    hostname = socket.gethostname()
-    local_ip = socket.gethostbyname(hostname)
-    return local_ip
 
 # Generate a random string to use as the file name
 def generate_random_filename(extension):
@@ -57,10 +50,9 @@ def upload_file():
         filepath = os.path.join(app.config['UPLOAD_FOLDER'], random_filename)
         file.save(filepath)
 
-        # Get the local IP address of the server
-        local_ip = get_local_ip()
-        # Construct the image URL with the local IP address
-        image_url = f"http://{local_ip}:5000/uploads/{random_filename}"
+        # Use the hosted domain URL
+        hosted_domain = "https://capturedimageqrcode-2.onrender.com"
+        image_url = f"{hosted_domain}/uploads/{random_filename}"
         qr_code_path = generate_qr_code(image_url, random_filename)
 
         return jsonify({
