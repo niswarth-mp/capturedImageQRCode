@@ -24,10 +24,20 @@ def get_local_ip():
     local_ip = socket.gethostbyname(hostname)
     return local_ip
 
-# Generate a random string to use as the file name
-def generate_random_filename(extension):
-    random_string = ''.join(random.choices(string.ascii_letters + string.digits, k=10))
-    return f"{random_string}.{extension}"
+# Function to generate a number-based filename for the uploaded image
+def generate_numbered_filename():
+    # Generate a number-based filename (e.g., 1.jpg, 2.png, etc.)
+    files = os.listdir(app.config['UPLOAD_FOLDER'])
+    last_number = 0
+    for file in files:
+        if file.endswith(('.jpg', '.jpeg', '.png', '.gif')):  # Filter image files
+            try:
+                number = int(os.path.splitext(file)[0])  # Get the number from the filename
+                last_number = max(last_number, number)
+            except ValueError:
+                continue
+    new_number = last_number + 1
+    return f"{new_number}.jpg"  # You can adjust the file extension as needed
 
 @app.route('/')
 def index():
@@ -62,15 +72,15 @@ def upload_file():
         else:
             return jsonify({'error': 'Invalid file extension'}), 400
 
-        random_filename = generate_random_filename(extension)
+        # Generate a numbered filename (e.g., 1.jpg, 2.jpg, etc.)
+        random_filename = generate_numbered_filename()
 
-        # Save the uploaded image with the random filename
+        # Save the uploaded image with the numbered filename
         filepath = os.path.join(app.config['UPLOAD_FOLDER'], random_filename)
         file.save(filepath)
 
-        # Get the local IP address of the server
-        local_ip = get_local_ip()
-        image_url = f"http://{local_ip}:5000/uploads/{random_filename}"
+        # Use the fixed URL for the image
+        image_url = f"https://capturedimageqrcode-2.onrender.com/uploads/{random_filename}"
         
         # Generate a QR code for the image URL
         qr_code_path = generate_qr_code(image_url, random_filename)
@@ -117,6 +127,6 @@ def delete_file(filename):
 
     return jsonify({'success': True}), 200
 
-# if __name__ == '__main__':
-#     # Run the server on the local IP address
-#     app.run(debug=True, host="0.0.0.0", port=5000)
+if __name__ == '__main__':
+    # Run the server on the local IP address
+    app.run(debug=True, host="0.0.0.0", port=5000)
