@@ -40,12 +40,17 @@
 
       #captureButton {
         position: absolute;
-        bottom: 30px; /* Positioned near the bottom of the screen */
-        left: 50%;
+        bottom: 45%; /* Positioned near the bottom of the screen */
+        left: 90%;
         transform: translateX(-50%);
-        width: 90px; /* Increased the button size */
-        height: 90px; /* Increased the button size */
-        background-color: rgba(255, 255, 255, 0.3); /* Transparent white background */
+        width: 50px; /* Increased the button size */
+        height: 50px; /* Increased the button size */
+        background-color: rgba(
+          255,
+          255,
+          255,
+          0.3
+        ); /* Transparent white background */
         border-radius: 50%; /* Make it round */
         border: none;
         cursor: pointer;
@@ -57,15 +62,20 @@
       }
 
       #captureButton:hover {
-        background-color: rgba(255, 255, 255, 0.5); /* Slightly darker when hovered */
+        background-color: rgba(
+          255,
+          255,
+          255,
+          0.5
+        ); /* Slightly darker when hovered */
       }
 
       /* Style the Switch Camera Icon */
       #cameraToggle {
         position: absolute;
         bottom: 30px; /* Positioned at the bottom */
-        right: 20px; /* Positioned to the right side */
-        font-size: 40px; /* Icon size */
+        right: 50px; /* Positioned to the right side */
+        font-size: 30px; /* Icon size */
         color: rgba(255, 255, 255, 0.7); /* Dark icon color */
         background: rgba(0, 0, 0, 0.6); /* Dark background */
         border-radius: 50%; /* Rounded button */
@@ -98,10 +108,17 @@
         #captureButton {
           width: 80px;
           height: 80px;
+          bottom: 30px; /* Space from the bottom */
+          left: 50%; /* Center horizontally */
+          transform: translateX(-50%); /* Center the button */
+          font-size: 40px; /* Icon size */
         }
 
         #cameraToggle {
           font-size: 35px;
+          bottom: 30px; /* Positioned at the bottom */
+          right: 20px; /* Positioned to the right side */
+          font-size: 40px; /* Icon size */
         }
       }
     </style>
@@ -110,8 +127,10 @@
     <div id="cameraSection">
       <video id="videoElement" autoplay></video>
       <canvas id="canvas" style="display: none"></canvas>
-      <button id="captureButton"></button> <!-- No text, just the button -->
-      <button id="cameraToggle"><i class="fas fa-sync-alt"></i></button> <!-- Camera switch icon -->
+      <button id="captureButton"></button>
+      <!-- No text, just the button -->
+      <button id="cameraToggle"><i class="fas fa-sync-alt"></i></button>
+      <!-- Camera switch icon -->
     </div>
 
     <div id="popup" class="popup">
