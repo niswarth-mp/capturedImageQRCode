@@ -4,55 +4,86 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Image Upload with QR Code</title>
+    <!-- Include Font Awesome for camera icon -->
+    <link
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
+      rel="stylesheet"
+    />
     <style>
-      /* General styling for the body */
       body {
         font-family: Arial, sans-serif;
         margin: 0;
         padding: 0;
-        background-color: #000; /* black background to complement full-screen video */
+        background-color: #000;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        overflow: hidden;
       }
 
-      /* Full-screen video setup */
       #cameraSection {
         position: relative;
         width: 100%;
-        height: 100vh; /* Full screen height */
+        height: 100%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        overflow: hidden;
       }
 
       video {
         width: 100%;
-        height: 100%; /* Full height */
-        object-fit: cover; /* Ensures the video covers the screen without distortion */
-        border: none;
+        height: 100%;
+        object-fit: cover;
       }
 
-      /* Styling for the capture button */
       #captureButton {
         position: absolute;
-        top: 20px;
+        bottom: 30px; /* Positioned near the bottom of the screen */
         left: 50%;
         transform: translateX(-50%);
-        padding: 15px 30px;
-        font-size: 18px;
-        background-color: #4caf50;
-        color: white;
+        width: 90px; /* Increased the button size */
+        height: 90px; /* Increased the button size */
+        background-color: rgba(255, 255, 255, 0.3); /* Transparent white background */
+        border-radius: 50%; /* Make it round */
         border: none;
-        border-radius: 5px;
         cursor: pointer;
-        width: 80%;
-        max-width: 300px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2); /* Add shadow for better visibility */
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 9999;
       }
 
       #captureButton:hover {
-        background-color: #45a049;
+        background-color: rgba(255, 255, 255, 0.5); /* Slightly darker when hovered */
       }
 
-      /* Pop-up Styling */
-      .popup {
+      /* Style the Switch Camera Icon */
+      #cameraToggle {
+        position: absolute;
+        bottom: 30px; /* Positioned at the bottom */
+        right: 20px; /* Positioned to the right side */
+        font-size: 40px; /* Icon size */
+        color: rgba(255, 255, 255, 0.7); /* Dark icon color */
+        background: rgba(0, 0, 0, 0.6); /* Dark background */
+        border-radius: 50%; /* Rounded button */
+        border: none;
+        cursor: pointer;
+        padding: 10px;
+        z-index: 999;
+      }
+
+      #cameraToggle:hover {
+        color: #ffcc00; /* Icon color change on hover */
+        background-color: rgba(0, 0, 0, 0.8); /* Darker background on hover */
+      }
+
+      #popup {
         display: none;
         position: absolute;
-        top: 50px; /* Adjust pop-up position to be above the video */
+        top: 50px;
         left: 50%;
         transform: translateX(-50%);
         padding: 20px;
@@ -61,72 +92,67 @@
         border-radius: 5px;
         text-align: center;
         z-index: 9999;
-        max-width: 90%;
-        width: 100%;
       }
 
-      .popup h2 {
-        font-size: 20px;
-        margin-bottom: 10px;
-      }
-
-      .popup p {
-        font-size: 16px;
-        margin-bottom: 20px;
-      }
-
-      .popup button {
-        padding: 10px 20px;
-        background-color: #4caf50;
-        color: white;
-        border: none;
-        border-radius: 5px;
-        cursor: pointer;
-        font-size: 16px;
-      }
-
-      .popup button:hover {
-        background-color: #45a049;
-      }
-
-      /* Media query for smaller screens */
       @media (max-width: 600px) {
         #captureButton {
-          width: 100%;
+          width: 80px;
+          height: 80px;
+        }
+
+        #cameraToggle {
+          font-size: 35px;
         }
       }
     </style>
   </head>
   <body>
-    <div class="container">
-      <h1 style="display: none">Capture Image and Upload</h1>
-      <!-- Hidden header for better mobile view -->
+    <div id="cameraSection">
+      <video id="videoElement" autoplay></video>
+      <canvas id="canvas" style="display: none"></canvas>
+      <button id="captureButton"></button> <!-- No text, just the button -->
+      <button id="cameraToggle"><i class="fas fa-sync-alt"></i></button> <!-- Camera switch icon -->
+    </div>
 
-      <!-- Camera Capture Section -->
-      <div id="cameraSection">
-        <video id="videoElement" autoplay></video>
-        <canvas id="canvas" style="display: none"></canvas>
-        <button id="captureButton">Capture Image</button>
-      </div>
-
-      <!-- Pop-up for Confirmation -->
-      <div id="popup" class="popup">
-        <h2>Image Captured Successfully!</h2>
-        <p>Your image has been uploaded along with the QR code.</p>
-        <button id="closePopup">Close</button>
-      </div>
+    <div id="popup" class="popup">
+      <h2>Image Captured Successfully!</h2>
+      <p>Your image has been uploaded along with the QR code.</p>
+      <button id="closePopup">Close</button>
     </div>
 
     <script>
+      let usingFrontCamera = true; // Tracks the camera being used
+      let currentStream;
+
       // Start the camera feed
       async function startCamera() {
-        const stream = await navigator.mediaDevices.getUserMedia({
-          video: true,
-        });
-        document.getElementById("videoElement").srcObject = stream;
+        const constraints = {
+          video: {
+            facingMode: usingFrontCamera ? "user" : "environment", // Front or back camera
+          },
+        };
+
+        if (currentStream) {
+          // Stop the previous stream before starting a new one
+          currentStream.getTracks().forEach((track) => track.stop());
+        }
+
+        try {
+          const stream = await navigator.mediaDevices.getUserMedia(constraints);
+          currentStream = stream;
+          document.getElementById("videoElement").srcObject = stream;
+        } catch (err) {
+          alert("Error accessing camera: " + err.message);
+        }
       }
 
-      // Capture the image from the camera feed
+      // Toggle the camera between front and back
+      document.getElementById("cameraToggle").addEventListener("click", () => {
+        usingFrontCamera = !usingFrontCamera;
+        startCamera();
+      });
+
+      // Capture the image
       document.getElementById("captureButton").addEventListener("click", () => {
         const canvas = document.getElementById("canvas");
         const videoElement = document.getElementById("videoElement");
@@ -152,7 +178,6 @@
         });
 
         if (response.ok) {
-          // Show pop-up on successful upload
           showPopup();
         } else {
           alert("Image upload failed!");
@@ -170,19 +195,19 @@
         return new Blob([ab], { type: "image/png" });
       }
 
-      // Show pop-up
+      // Show the popup
       function showPopup() {
         const popup = document.getElementById("popup");
         popup.style.display = "block";
       }
 
-      // Close the pop-up
+      // Close the popup
       document.getElementById("closePopup").addEventListener("click", () => {
         const popup = document.getElementById("popup");
         popup.style.display = "none";
       });
 
-      // Start camera feed when the page loads
+      // Start the camera on page load
       window.onload = startCamera;
     </script>
   </body>
