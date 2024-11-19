@@ -151,7 +151,8 @@
     <div style="text-align: center; margin-bottom: 20px">
       <a href="/capture">Capture More Memories</a>
       <!-- New Button -->
-      <button onclick="navigateToGallery()">View Full Gallery</button>
+      <button onclick="navigateToGallery()">Manage Gallery</button>
+      <button onclick="navigateToViewGallery()">View Gallery</button>
     </div>
 
     <!-- Image Upload Form -->
@@ -182,6 +183,10 @@
       // Navigate to Gallery Page
       function navigateToGallery() {
         window.location.href = "/gallery"; // Ensure '/gallery' is defined in Flask
+      }
+
+      function navigateToViewGallery() {
+        window.location.href = "/viewGallery"; // Ensure '/gallery' is defined in Flask
       }
 
       const uploadForm = document.getElementById("uploadForm");
