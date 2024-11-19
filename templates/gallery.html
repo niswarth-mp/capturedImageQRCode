@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Manage Wedding Memories</title>
+    <style>
+      /* General Reset */
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: "Cursive", Arial, sans-serif;
+        background-color: #fffaf2;
+        color: #5a2d22;
+        padding: 20px;
+      }
+
+      h1 {
+        text-align: center;
+        margin-bottom: 30px;
+        font-size: 3rem;
+        color: #b76e79;
+        font-family: "Dancing Script", cursive;
+      }
+
+      .gallery-list {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 20px;
+        max-width: 1200px;
+        margin: 0 auto;
+      }
+
+      .gallery-list-item {
+        background-color: #fff;
+        border: 1px solid #e6d4c3;
+        border-radius: 15px;
+        box-shadow: 0 6px 10px rgba(0, 0, 0, 0.1);
+        padding: 20px;
+        text-align: center;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: space-between;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+      }
+
+      .gallery-list-item:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+      }
+
+      .gallery-list-item img {
+        max-width: 100%;
+        height: auto;
+        border-radius: 10px;
+        margin-bottom: 15px;
+      }
+
+      .actions {
+        display: flex;
+        gap: 10px;
+        justify-content: center;
+      }
+
+      button {
+        background-color: #b76e79;
+        color: #fff;
+        border: none;
+        padding: 8px 15px;
+        border-radius: 10px;
+        cursor: pointer;
+        font-family: "Dancing Script", cursive;
+        font-size: 1rem;
+        transition: background-color 0.3s ease;
+      }
+
+      button:hover {
+        background-color: #8c4b55;
+      }
+
+      button.delete {
+        background-color: #e63946;
+      }
+
+      button.delete:hover {
+        background-color: #b71d24;
+      }
+
+      footer {
+        text-align: center;
+        margin-top: 40px;
+        color: #8c4b55;
+        font-family: "Dancing Script", cursive;
+        font-size: 1.2rem;
+      }
+
+      /* Pop-up Styles */
+      .popup-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.5);
+        display: none;
+        justify-content: center;
+        align-items: center;
+        transition: opacity 0.3s ease;
+      }
+
+      .popup {
+        background-color: #fff;
+        border-radius: 15px;
+        padding: 30px;
+        width: 300px;
+        text-align: center;
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+      }
+
+      .popup h2 {
+        margin-bottom: 20px;
+        font-size: 1.5rem;
+        color: #b76e79;
+      }
+
+      .popup button {
+        margin: 10px;
+      }
+
+      .popup button.confirm {
+        background-color: #e63946;
+        color: #fff;
+      }
+
+      .popup button.cancel {
+        background-color: #8c4b55;
+        color: #fff;
+      }
+
+      .popup button:hover {
+        opacity: 0.9;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Manage Wedding Memories</h1>
+
+    <!-- Gallery List -->
+    <div class="gallery-list" id="galleryList">
+      {% for image_file in image_files %}
+      <div class="gallery-list-item" data-filename="{{ image_file }}">
+        <img
+          src="{{ url_for('serve_uploaded_file', filename=image_file) }}"
+          alt="Uploaded Image"
+        />
+        <div class="actions">
+          <a
+            href="{{ url_for('serve_uploaded_file', filename=image_file) }}"
+            download
+          >
+            <button>Download</button>
+          </a>
+          <button class="delete">Delete</button>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+
+    <footer>Cherish your memories forever. Manage them with care. 💖</footer>
+
+    <!-- Delete Confirmation Pop-up -->
+    <div class="popup-overlay" id="popupOverlay">
+      <div class="popup">
+        <h2>Are you sure you want to delete this image?</h2>
+        <div>
+          <button class="cancel">Cancel</button>
+          <button class="confirm">Confirm</button>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      const galleryList = document.getElementById("galleryList");
+      const popupOverlay = document.getElementById("popupOverlay");
+      const confirmButton = popupOverlay.querySelector(".confirm");
+      const cancelButton = popupOverlay.querySelector(".cancel");
+      let deleteFile = null;
+
+      // Event delegation for delete buttons
+      galleryList.addEventListener("click", async (e) => {
+        if (e.target.classList.contains("delete")) {
+          const listItem = e.target.closest(".gallery-list-item");
+          deleteFile = listItem.getAttribute("data-filename");
+
+          // Show the confirmation pop-up
+          popupOverlay.style.display = "flex";
+        }
+      });
+
+      // Handle cancel button
+      cancelButton.addEventListener("click", () => {
+        popupOverlay.style.display = "none";
+        deleteFile = null;
+      });
+
+      // Handle confirm button
+      confirmButton.addEventListener("click", async () => {
+        if (deleteFile) {
+          // Delete request to the server
+          const response = await fetch(`/delete/${deleteFile}`, {
+            method: "DELETE",
+          });
+
+          if (response.ok) {
+            // Remove the item from the list and close the pop-up
+            const listItem = document.querySelector(
+              `[data-filename="${deleteFile}"]`
+            );
+            listItem.remove();
+            popupOverlay.style.display = "none";
+            deleteFile = null;
+          } else {
+            alert("Failed to delete the image. Please try again.");
+          }
+        }
+      });
+    </script>
+  </body>
+</html>
