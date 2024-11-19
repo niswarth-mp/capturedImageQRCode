@@ -56,6 +56,12 @@ def gallery():
     image_files = os.listdir(app.config['UPLOAD_FOLDER'])
     return render_template("gallery.html", image_files=image_files)
 
+@app.route('/viewGallery')
+def viewgallery():
+    # Get list of uploaded images
+    image_files = os.listdir(app.config['UPLOAD_FOLDER'])
+    return render_template("viewGallery.html", image_files=image_files)
+    
 @app.route('/upload', methods=['POST'])
 def upload_file():
     if 'file' not in request.files:
