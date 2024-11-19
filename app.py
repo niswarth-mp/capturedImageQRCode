@@ -88,6 +88,6 @@ def serve_uploaded_file(filename):
 def serve_qr_code(filename):
     return send_from_directory(app.config['QR_FOLDER'], filename)
 
-if __name__ == '__main__':
-    # Run the server on the local IP address
-    app.run(debug=True, host="0.0.0.0", port=5000)
+# if __name__ == '__main__':
+#     # Run the server on the local IP address
+#     app.run(debug=True, host="0.0.0.0", port=5000)
